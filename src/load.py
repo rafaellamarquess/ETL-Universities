@@ -1,37 +1,44 @@
 import sqlite3
 
+class Load:
+    def __init__(self, db_name="universidades.db"):
+        self.db_name = db_name
 
-class Load():
+    def create_table(self):
+        """Cria a tabela de universidades no banco SQLite."""
+        con = sqlite3.connect(self.db_name)
+        cur = con.cursor()
 
-    def _init_(self):
-        pass
-
-    def load_data(self, universities, table_name):
-
-        # Criar o banco e se concectar nele
-        con = sqlite3.connect("universidades.db")
-        c = con.cursor()
-
-        # Criar a tabela no banco
-        c.execute(f'''
-        CREATE TABLE IF NOT EXISTS {table_name}
-                (
-                id INTERGER PRIMARY KEY,
+        cur.execute('''
+            CREATE TABLE IF NOT EXISTS universities (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
                 name TEXT,
                 country TEXT,
                 state_province TEXT,
                 web_pages TEXT,
                 domains TEXT
-                );
+            );
         ''')
+        con.commit()
+        con.close()
 
-        for university in universities: 
-            c.execute('''INSERT INTO universities (name, country, state_province, web_pages, domains) VALUES (?,?,?,?,?);''',
-                    (university.get('name'), 
-                    university.get('country'), 
-                    university.get('state-province'), 
-                    ', '.join(university.get('web_pages', [])), 
-                    ', '.join(university.get('domains', []))))
+    def load_data(self, df):
+        """Insere os dados tratados no banco."""
+        con = sqlite3.connect(self.db_name)
+        cur = con.cursor()
+
+        for _, row in df.iterrows():
+            cur.execute('''
+                INSERT INTO universities (name, country, state_province, web_pages, domains)
+                VALUES (?, ?, ?, ?, ?);
+            ''', (
+                row["name"],
+                row["country"],
+                row["state-province"],
+                row["web_pages"],
+                row["domains"]
+            ))
 
         con.commit()
         con.close()
+        print("Dados inseridos no banco com sucesso.")
